@@ -1,5 +1,6 @@
 frontend:
   image: nginx
+  restart: always
   ports:
     - "80:80"
     - "443:443"
@@ -18,6 +19,7 @@ manager:
 
 transmission:
   image: linuxserver/transmission
+  restart: always
   volumes:
     - /etc/localtime:/etc/localtime:ro
     - %(containers)s/transmission/:/config
@@ -33,8 +35,9 @@ transmission:
 
 jackett:
   image: kilian/docker-jackett
+  restart: always
   volumes:
-    - %(containers)s/jackett/:/data/config
+    - %(containers)s/jackett/:/root/.config
     - %(home)s/Downloads/Torrents:/downloads
   ports:
     - "9117:9117"
@@ -62,6 +65,7 @@ jackett:
 
 plexpy:
   image: linuxserver/plexpy
+  restart: always
   ports:
     - "8001:8181"
   environment:
@@ -84,6 +88,7 @@ couchpotato:
     - PGID=%(gid)s
     - PUID=%(uid)s
     - TZ=Europe/London
+  restart: always
   volumes:
     - %(containers)s/plexpy/:/config
     - %(home)s/Downloads:/downloads
@@ -100,6 +105,7 @@ sonarr:
   environment:
     - PGID=%(gid)s
     - PUID=%(uid)s
+  restart: always
   volumes:
     #- /dev/rtc:/dev/rtc:ro
     - %(containers)s/sonarr/:/config
@@ -109,3 +115,33 @@ sonarr:
     - transmission:transmission
     - jackett:jackett
 
+#beets:
+#  image: linuxserver/beets
+#  ports:
+#    - "8337:8337"
+#  environment:
+#    - PGID=%(gid)s
+#    - PUID=%(uid)s
+#  volumes:
+#    - /etc/localtime:/etc/localtime:ro
+#    - %(containers)s/beets/:/config
+#    - %(home)s/Music:/music
+#    - %(home)s/Downloads:/downloads
+
+
+headphones:
+  image: linuxserver/headphones
+  volumes:
+    - %(containers)s/headphones/:/config
+    - %(home)s/Downloads:/downloads
+    - %(home)s/Music:/music
+  restart: always
+  environment:
+    - PGID=%(gid)s
+    - PUID=%(uid)s
+    - TZ=Europe/London
+  ports:
+    - "8181:8181"
+  links:
+    - jackett:jackett
+    - transmission:transmission

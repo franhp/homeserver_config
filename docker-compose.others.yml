@@ -40,21 +40,6 @@
 #    - %(containers)s/mysql/:/config
 
 
-#headphones:
-#  image: linuxserver/headphones
-#  volumes:
-#    - %(containers)s/headphones/:/config
-#    - %(home)s/Downloads:/downloads
-#    - %(home)s/Music:/music
-#  environment:
-#    - PGID=%(gid)s
-#    - PUID=%(uid)s
-#    - TZ=Europe/London
-#  ports:
-#    - "8181:8181"
-#  links:
-#    - jackett:jackett
-
 #cops: https://hub.docker.com/r/linuxserver/cops/
 #codiad: https://hub.docker.com/r/linuxserver/codiad/
 #beets: https://hub.docker.com/r/linuxserver/beets/
