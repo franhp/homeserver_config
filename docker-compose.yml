@@ -1,0 +1,111 @@
+frontend:
+  image: nginx
+  ports:
+    - "80:80"
+    - "443:443"
+  links:
+    - manager:manager
+  volumes:
+    - %(containers)s/frontend/:/etc/nginx/conf.d/
+
+manager:
+  image: chimpchimp/manage-this-node
+  restart: always
+  volumes:
+    - %(containers)s/manager/:/config
+  ports:
+    - "3000:3000"
+
+transmission:
+  image: linuxserver/transmission
+  volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - %(containers)s/transmission/:/config
+    - %(home)s/Downloads:/downloads
+    - %(home)s/Downloads/Torrents:/watch
+  environment:
+    - PGID=%(gid)s
+    - PUID=%(uid)s
+  ports:
+    - "9091:9091"
+    - "51413:51413"
+
+
+jackett:
+  image: kilian/docker-jackett
+  volumes:
+    - %(containers)s/jackett/:/data/config
+    - %(home)s/Downloads/Torrents:/downloads
+  ports:
+    - "9117:9117"
+
+
+# Doesn't work as well as the native one
+#plex:
+#  image: linuxserver/plex
+#  environment:
+#    - PGID=%(gid)s
+#    - PUID=%(uid)s
+#    - VERSION=latest
+#  ports:
+#    - "32400:32400"
+#    - "32400:32400/udp"
+#    - "32469:32469"
+#    - "32469:32469/udp"
+#    - "5353:5353/udp"
+#    - "1900:1900/udp"
+#  volumes:
+#    - %(containers)s/plex/:/config
+#    - %(home)s/Movies/:/data/current
+#    - /Volumes/My Passport/:/data/backup
+#
+
+plexpy:
+  image: linuxserver/plexpy
+  ports:
+    - "8001:8181"
+  environment:
+    - PGID=%(gid)s
+    - PUID=%(uid)s
+    - TZ=Europe/London
+  volumes:
+    - %(containers)s/plexpy/:/config
+    - %(home)s/Library/Logs/Plex Media Server/:/logs:ro
+#    - %(containers)s/plex/Library/Application Support/Plex Media Server/Logs/:/logs:ro
+#  links:
+#    - plex:plex
+
+
+couchpotato:
+  image: linuxserver/couchpotato
+  ports:
+    - "5050:5050"
+  environment:
+    - PGID=%(gid)s
+    - PUID=%(uid)s
+    - TZ=Europe/London
+  volumes:
+    - %(containers)s/plexpy/:/config
+    - %(home)s/Downloads:/downloads
+    - %(home)s/Movies/Pelis/:/movies
+  links:
+    #- plex:plex
+    - transmission:transmission
+    - jackett:jackett
+
+sonarr:
+  image: linuxserver/sonarr
+  ports:
+    - "8989:8989"
+  environment:
+    - PGID=%(gid)s
+    - PUID=%(uid)s
+  volumes:
+    #- /dev/rtc:/dev/rtc:ro
+    - %(containers)s/sonarr/:/config
+    - %(home)s/Movies/Series/:/tv
+    - %(home)s/Downloads:/downloads
+  links:
+    - transmission:transmission
+    - jackett:jackett
+

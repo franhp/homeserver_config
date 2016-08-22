@@ -1,0 +1,60 @@
+#jackett-new:
+#  image: linuxserver/jackett
+#  volumes:
+#    - %(containers)s/jackett/:/config
+#    - %(home)s/Downloads/Torrents:/downloads
+#  links:
+#    - couchpotato:couchpotato
+#  environment:
+#    - TIMEZONE=Europe/London
+#    - PGID=%(gid)s
+#    - PUID=%(uid)s
+#  ports:
+#    - "9117:9117"
+
+#mylar:
+#  image: linuxserver/mylar
+#  volumes:
+#    - /etc/localtime:/etc/localtime:ro
+#    - %(containers)s/mylar/:/config
+#    - %(home)s/Downloads:/downloads
+#    - %(home)s/Comics/:/comics
+#  environment:
+#    - PGID=%(gid)s
+#    - PUID=%(uid)s
+#  ports:
+#    - "8090:8090"
+#  links:
+#    - jackett:jackett
+
+
+#database:
+#  image: linuxserver/mysql
+#  ports:
+#    - "3306:3306"
+#  environment:
+#    - PGID=%(gid)s
+#    - PUID=%(uid)s
+#    - MYSQL_ROOT_PASSWORD=%(mysql_root_pwd)s
+#  volumes:
+#    - %(containers)s/mysql/:/config
+
+
+#headphones:
+#  image: linuxserver/headphones
+#  volumes:
+#    - %(containers)s/headphones/:/config
+#    - %(home)s/Downloads:/downloads
+#    - %(home)s/Music:/music
+#  environment:
+#    - PGID=%(gid)s
+#    - PUID=%(uid)s
+#    - TZ=Europe/London
+#  ports:
+#    - "8181:8181"
+#  links:
+#    - jackett:jackett
+
+#cops: https://hub.docker.com/r/linuxserver/cops/
+#codiad: https://hub.docker.com/r/linuxserver/codiad/
+#beets: https://hub.docker.com/r/linuxserver/beets/
