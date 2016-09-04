@@ -90,7 +90,7 @@ couchpotato:
     - TZ=Europe/London
   restart: always
   volumes:
-    - %(containers)s/plexpy/:/config
+    - %(containers)s/couchpotato/:/config
     - %(home)s/Downloads:/downloads
     - %(home)s/Movies/Pelis/:/movies
   links:
@@ -145,3 +145,12 @@ headphones:
   links:
     - jackett:jackett
     - transmission:transmission
+
+
+youtubedl:
+  image: franhp/youtubedl-web
+  volumes:
+    - %(home)s/Downloads:/downloads
+  ports:
+    - "5000:5000"
+  restart: always
