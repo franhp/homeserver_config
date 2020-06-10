@@ -1,0 +1,3 @@
+- tasks:
+    - name: ensure docker is installed
+    - name: ensure docker-compose is installed

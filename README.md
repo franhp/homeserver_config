@@ -1,2 +1,3 @@
-# homeserver_docker
-Docker configs for the homeserver
+# homeserver_config
+
+Configuration deployment for the homeserver written in Ansible
