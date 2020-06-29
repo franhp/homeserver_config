@@ -8,7 +8,7 @@ services:
         - "traefik.enable=true"
         - "traefik.backend=traefik"
         - "traefik.frontend.rule=Host:traefik.{{ private_domain }}"
-        - "traefik.frontend.entryPoints=https"
+        - "traefik.frontend.entryPoints=http"
         - "traefik.frontend.auth.basic.usersFile=/htpasswd"
       command: --api --docker
       ports:
@@ -27,7 +27,7 @@ services:
           - "traefik.enable=true"
           - "traefik.backend=jackett"
           - "traefik.frontend.rule=Host:jackett.{{ private_domain }}"
-          - "traefik.frontend.entryPoints=https"
+          - "traefik.frontend.entryPoints=http"
         environment:
           - PGID=1000
           - PUID=1000
@@ -43,7 +43,7 @@ services:
             - "traefik.enable=true"
             - "traefik.backend=sonarr"
             - "traefik.frontend.rule=Host:sonarr.{{ private_domain }}"
-            - "traefik.frontend.entryPoints=https"
+            - "traefik.frontend.entryPoints=http"
             - "traefik.frontend.auth.basic.usersFile=/htpasswd"
         links:
             - jackett:jackett
@@ -62,7 +62,7 @@ services:
             - "traefik.enable=true"
             - "traefik.backend=radarr"
             - "traefik.frontend.rule=Host:radarr.{{ private_domain }}"
-            - "traefik.frontend.entryPoints=https"
+            - "traefik.frontend.entryPoints=http"
             - "traefik.frontend.auth.basic.usersFile=/htpasswd"
         volumes:
             - {{ installation_path }}radarr/:/config
@@ -83,7 +83,7 @@ services:
             - "traefik.enable=true"
             - "traefik.backend=bazarr"
             - "traefik.frontend.rule=Host:bazarr.{{ private_domain }}"
-            - "traefik.frontend.entryPoints=https"
+            - "traefik.frontend.entryPoints=http"
             - "traefik.frontend.auth.basic.usersFile=/htpasswd"
         volumes:
             - {{ installation_path }}bazarr/:/config
@@ -105,7 +105,7 @@ services:
             - "traefik.enable=true"
             - "traefik.backend=plex"
             - "traefik.frontend.rule=Host:plex.{{ private_domain }}"
-            - "traefik.frontend.entryPoints=https"
+            - "traefik.frontend.entryPoints=http"
             - "traefik.frontend.auth.basic.usersFile=/htpasswd"
         volumes:
             - {{ movies_dir }}:/movies
@@ -126,7 +126,7 @@ services:
           - "traefik.enable=true"
           - "traefik.backend=transmission"
           - "traefik.frontend.rule=Host:transmission.{{ private_domain }}"
-          - "traefik.frontend.entryPoints=https"
+          - "traefik.frontend.entryPoints=http"
           - "traefik.frontend.auth.basic.usersFile=/htpasswd"
         environment:
             - PUID=1000
