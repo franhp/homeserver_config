@@ -1,7 +1,9 @@
-- git:
+- name: download the homepage repository
+  git:
     repo: "git@github.com:franhp/homepage.git"
-    dest: "{{ installation_path}}/homepage"
+    dest: "{{ installation_path }}/homepage"
     update: yes
+    version: master
   register: git_output
 
 - block:
@@ -40,5 +42,7 @@
   copy:
     src: nginx/homepage.conf
     dest: "{{ installation_path }}/nginx/config/homepage.conf"
-# - name: force nginx config reload
-#   command: docker exec -it containers_static_1 nginx -s reload
+
+- name: force nginx config reload
+  command: docker exec -it containers_static_1 nginx -s reload
+  changed_when: True

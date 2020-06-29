@@ -1,7 +1,9 @@
-- git:
+- name: download the techiela repository
+  git:
     repo: "git@github.com:te-chie-la/techiela-web.git"
-    dest: "{{ installation_path}}/techiela-web"
+    dest: "{{ installation_path }}/techiela-web"
     update: yes
+    version: master
   register: git_output
 
 - block:
@@ -35,3 +37,4 @@
 
 - name: force nginx config reload
   command: docker exec -it containers_static_1 nginx -s reload
+  changed_when: True
