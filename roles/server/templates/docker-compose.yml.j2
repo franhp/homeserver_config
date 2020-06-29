@@ -1,0 +1,173 @@
+{{ ansible_managed | comment }}
+version: '2'
+
+services:
+    traefik:
+      image: traefik:1.7
+      labels:
+        - "traefik.enable=true"
+        - "traefik.backend=traefik"
+        - "traefik.frontend.rule=Host:traefik.{{ private_domain }}"
+        - "traefik.frontend.entryPoints=https"
+        - "traefik.frontend.auth.basic.usersFile=/htpasswd"
+      command: --api --docker
+      ports:
+        - 80:80
+        - 443:443
+        - 8000:8080
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+        - {{ installation_path }}traefik/traefik.toml:/etc/traefik/traefik.toml
+        - {{ installation_path }}traefik/htpasswd:/htpasswd
+        - {{ installation_path }}traefik/acme:/etc/acme
+
+    jackett:
+        image: linuxserver/jackett
+        labels:
+          - "traefik.enable=true"
+          - "traefik.backend=jackett"
+          - "traefik.frontend.rule=Host:jackett.{{ private_domain }}"
+          - "traefik.frontend.entryPoints=https"
+        environment:
+          - PGID=1000
+          - PUID=1000
+          - TZ=Europe/London
+          - --IgnoreSslErrors true
+        volumes:
+          - {{ installation_path }}jackett/:/config/
+          - {{ download_dir }}Torrents:/downloads
+
+    sonarr:
+        image: linuxserver/sonarr
+        labels:
+            - "traefik.enable=true"
+            - "traefik.backend=sonarr"
+            - "traefik.frontend.rule=Host:sonarr.{{ private_domain }}"
+            - "traefik.frontend.entryPoints=https"
+            - "traefik.frontend.auth.basic.usersFile=/htpasswd"
+        links:
+            - jackett:jackett
+            - transmission:transmission
+        environment:
+            - PGID=1000
+            - PUID=1000
+        volumes:
+            - {{ installation_path }}sonarr:/config
+            - {{ tvseries_dir }}:/tv
+            - {{ download_dir }}:/downloads
+
+    radarr:
+        image: linuxserver/radarr
+        labels:
+            - "traefik.enable=true"
+            - "traefik.backend=radarr"
+            - "traefik.frontend.rule=Host:radarr.{{ private_domain }}"
+            - "traefik.frontend.entryPoints=https"
+            - "traefik.frontend.auth.basic.usersFile=/htpasswd"
+        volumes:
+            - {{ installation_path }}radarr/:/config
+            - {{ download_dir }}:/downloads
+            - {{ movies_dir }}:/movies
+        environment:
+            - PGID=1000
+            - PUID=1000
+            - TZ=Europe/Madrid
+        links:
+            - jackett:jackett
+            - transmission:transmission
+
+
+    bazarr:
+        image: linuxserver/bazarr
+        labels:
+            - "traefik.enable=true"
+            - "traefik.backend=bazarr"
+            - "traefik.frontend.rule=Host:bazarr.{{ private_domain }}"
+            - "traefik.frontend.entryPoints=https"
+            - "traefik.frontend.auth.basic.usersFile=/htpasswd"
+        volumes:
+            - {{ installation_path }}bazarr/:/config
+            - {{ movies_dir }}:/movies
+            - {{ tvseries_dir }}:/tv
+        environment:
+            - PGID=1000
+            - PUID=1000
+            - TZ=Europe/Madrid
+        links:
+            - radarr:radarr
+            - sonarr:sonarr
+
+
+    plex:
+        image: linuxserver/plex
+        network_mode: host
+        labels:
+            - "traefik.enable=true"
+            - "traefik.backend=plex"
+            - "traefik.frontend.rule=Host:plex.{{ private_domain }}"
+            - "traefik.frontend.entryPoints=https"
+            - "traefik.frontend.auth.basic.usersFile=/htpasswd"
+        volumes:
+            - {{ movies_dir }}:/movies
+            - {{ tvseries_dir }}:/series
+            - {{ installation_path }}plex/library:/config
+            - {{ archive_dir1 }}:/archive1
+            - {{ archive_dir2 }}:/archive2
+        environment:
+            - PGID=1000
+            - PUID=1000
+            - VERSION=public
+        ports:
+            - "32400:32400"
+
+    transmission:
+        image: linuxserver/transmission
+        labels:
+          - "traefik.enable=true"
+          - "traefik.backend=transmission"
+          - "traefik.frontend.rule=Host:transmission.{{ private_domain }}"
+          - "traefik.frontend.entryPoints=https"
+          - "traefik.frontend.auth.basic.usersFile=/htpasswd"
+        environment:
+            - PUID=1000
+            - PGID=1000
+        volumes:
+            - {{ download_dir }}:/downloads
+            - {{ installation_path }}transmission:/config
+            - {{ download_dir }}Torrents:/watch
+        ports:
+            - "51413:51413"
+
+    static:
+        image: nginx
+        labels:
+          - "traefik.enable=true"
+          - "traefik.backend=static"
+          - "traefik.frontend.rule=Host:franhp.dev,chie.la,te.chie.la"
+          - "traefik.frontend.entryPoints=https"
+        volumes:
+          - {{ installation_path }}nginx/config:/etc/nginx/conf.d/
+          - {{ installation_path }}nginx/webpages:/usr/src/webpages/
+
+
+    yt:
+      image: franhp/youtubedl-web
+      labels:
+          - "traefik.enable=true"
+          - "traefik.backend=yt"
+          - "traefik.frontend.rule=Host:yt.{{ private_domain }}"
+          - "traefik.frontend.entryPoints=http"
+          - "traefik.frontend.auth.basic.usersFile=/htpasswd"
+      volumes:
+        - {{ download_dir }}:/downloads
+
+    moneymanager:
+      image: franhp/moneymanager
+      labels:
+          - "traefik.enable=true"
+          - "traefik.backend=moneymanager"
+          - "traefik.frontend.rule=Host:moneymanager.{{ private_domain }}"
+          - "traefik.frontend.entryPoints=http"
+          - "traefik.frontend.auth.basic.usersFile=/htpasswd"
+      volumes:
+          - {{ dropbox_dir }}/Economia/db.sqlite3:/usr/src/app/db.sqlite3

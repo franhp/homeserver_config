@@ -1,0 +1,55 @@
+- name: app directories exist
+  file:
+    path: "{{ installation_path }}/{{ item }}"
+    state: directory
+  loop:
+    - traefik
+    - nginx/config
+    - nginx/webpages
+    - plex
+    - radarr
+    - sonarr
+    - bazarr
+    - jackett/Jackett
+    - transmission
+
+- name: docker-compose file creation
+  template:
+    src: docker-compose.yml.j2
+    dest: "{{ installation_path}}/docker-compose.yml"
+
+- name: traefik configuration
+  template:
+    src: traefik.toml.j2
+    dest: "{{ installation_path}}traefik/traefik.toml"
+
+- name: traefik basic auth
+  copy:
+    dest: "{{ installation_path }}traefik/htpasswd"
+    content: |
+      {{ basic_auth }}
+
+- name: jackett configuration
+  template:
+    src: mediacenter/jackett.json.j2
+    dest: "{{ installation_path}}jackett/Jackett/ServerConfig.json"
+
+- name: radarr configuration
+  template:
+    src: mediacenter/radarr.xml.j2
+    dest: "{{ installation_path}}radarr/config.xml"
+
+- name: sonarr configuration
+  template:
+    src: mediacenter/sonarr.xml.j2
+    dest: "{{ installation_path}}sonarr/config.xml"
+
+- name: bazarr configuration
+  template:
+    src: mediacenter/bazarr.ini.j2
+    dest: "{{ installation_path}}bazarr/config/config.ini"
+
+- name: transmission configuration
+  template:
+    src: mediacenter/transmission.json.j2
+    dest: "{{ installation_path}}transmission/settings.json"

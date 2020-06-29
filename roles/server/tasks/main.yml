@@ -1,0 +1,12 @@
+- name: ensure docker is installed
+  become: yes
+  become_method: su
+  apt:
+    pkg:
+      - docker-ce
+      - docker-compose
+    state: present
+
+- include_tasks: mediacenter.yml
+- include_tasks: homepage.yml
+- include_tasks: techiela.yml

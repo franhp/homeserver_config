@@ -1,0 +1,37 @@
+- git:
+    repo: "git@github.com:te-chie-la/techiela-web.git"
+    dest: "{{ installation_path}}/techiela-web"
+    update: yes
+  register: git_output
+
+- block:
+    - name: generate techiela html sources
+      command: make build
+      args:
+        chdir: "{{ installation_path }}/techiela-web/"
+
+    - name: clean old techiela sources
+      file:
+        path: "{{ installation_path }}/nginx/webpages/techiela"
+        state: absent
+
+    - name: copy techiela sources to the static directory
+      copy:
+        src: "{{ installation_path }}/techiela-web/app/public/"
+        dest: "{{ installation_path }}/nginx/webpages/techiela"
+        remote_src: yes
+
+  when: git_output.after != git_output.before
+
+- name: copy nginx configuration
+  copy:
+    src: nginx/techiela.conf
+    dest: "{{ installation_path }}/nginx/config/techiela.conf"
+
+- name: copy nginx configuration
+  copy:
+    src: nginx/chiela.conf
+    dest: "{{ installation_path }}/nginx/config/chiela.conf"
+
+- name: force nginx config reload
+  command: docker exec -it containers_static_1 nginx -s reload
