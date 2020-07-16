@@ -3,31 +3,41 @@ version: '2'
 
 services:
     traefik:
-      image: traefik:1.7
-      labels:
-        - "traefik.enable=true"
-        - "traefik.backend=traefik"
-        - "traefik.frontend.rule=Host:traefik.{{ private_domain }}"
-        - "traefik.frontend.entryPoints=http"
-        - "traefik.frontend.auth.basic.usersFile=/htpasswd"
-      command: --api --docker
-      ports:
-        - 80:80
-        - 443:443
-        - 8000:8080
-      volumes:
-        - /var/run/docker.sock:/var/run/docker.sock
-        - {{ installation_path }}traefik/traefik.toml:/etc/traefik/traefik.toml
-        - {{ installation_path }}traefik/htpasswd:/htpasswd
-        - {{ installation_path }}traefik/acme:/etc/acme
+        image: traefik:v2.2
+        command: 
+          - "--api.insecure=true"
+          - "--api.dashboard=true"
+          - "--providers.docker=true"
+          - "--providers.docker.exposedbydefault=false"
+          - "--entrypoints.websecure.address=:443"
+          - "--entrypoints.web.address=:80"
+          - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+          - "--certificatesresolvers.myresolver.acme.email={{ email }}"
+          - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+        ports:
+          - 80:80
+          - 443:443
+          - 8080:8080
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock:ro
+          - {{ installation_path }}traefik:/letsencrypt
+
+    watchtower:
+        image: containrrr/watchtower
+        labels:
+          - "traefik.enable=false"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+        command: --cleanup --schedule "0 5 * * * *"
 
     jackett:
         image: linuxserver/jackett
         labels:
           - "traefik.enable=true"
-          - "traefik.backend=jackett"
-          - "traefik.frontend.rule=Host:jackett.{{ private_domain }}"
-          - "traefik.frontend.entryPoints=http"
+          - "traefik.http.routers.jackett.rule=Host(`jackett.{{ private_domain }}`)"
+          - "traefik.http.routers.jackett.entrypoints=web"
+          - "traefik.http.middlewares.auth.basicauth.users={{ basic_auth }}"
+          - "traefik.http.routers.jackett.middlewares=auth@docker"
         environment:
           - PGID=1000
           - PUID=1000
@@ -40,134 +50,132 @@ services:
     sonarr:
         image: linuxserver/sonarr
         labels:
-            - "traefik.enable=true"
-            - "traefik.backend=sonarr"
-            - "traefik.frontend.rule=Host:sonarr.{{ private_domain }}"
-            - "traefik.frontend.entryPoints=http"
-            - "traefik.frontend.auth.basic.usersFile=/htpasswd"
+          - "traefik.enable=true"
+          - "traefik.http.routers.sonarr.rule=Host(`sonarr.{{ private_domain }}`)"
+          - "traefik.http.routers.sonarr.entrypoints=web"
+          - "traefik.http.middlewares.auth.basicauth.users={{ basic_auth }}"
+          - "traefik.http.routers.sonarr.middlewares=auth@docker"
         links:
-            - jackett:jackett
-            - transmission:transmission
+          - jackett:jackett
+          - transmission:transmission
         environment:
-            - PGID=1000
-            - PUID=1000
+          - PGID=1000
+          - PUID=1000
         volumes:
-            - {{ installation_path }}sonarr:/config
-            - {{ tvseries_dir }}:/tv
-            - {{ download_dir }}:/downloads
+          - {{ installation_path }}sonarr:/config
+          - {{ tvseries_dir }}:/tv
+          - {{ download_dir }}:/downloads
 
     radarr:
         image: linuxserver/radarr
         labels:
-            - "traefik.enable=true"
-            - "traefik.backend=radarr"
-            - "traefik.frontend.rule=Host:radarr.{{ private_domain }}"
-            - "traefik.frontend.entryPoints=http"
-            - "traefik.frontend.auth.basic.usersFile=/htpasswd"
+          - "traefik.enable=true"
+          - "traefik.http.routers.radarr.rule=Host(`radarr.{{ private_domain }}`)"
+          - "traefik.http.routers.radarr.entrypoints=web"
+          - "traefik.http.middlewares.auth.basicauth.users={{ basic_auth }}"
+          - "traefik.http.routers.radarr.middlewares=auth@docker"
         volumes:
-            - {{ installation_path }}radarr/:/config
-            - {{ download_dir }}:/downloads
-            - {{ movies_dir }}:/movies
+          - {{ installation_path }}radarr/:/config
+          - {{ download_dir }}:/downloads
+          - {{ movies_dir }}:/movies
         environment:
-            - PGID=1000
-            - PUID=1000
-            - TZ=Europe/Madrid
+          - PGID=1000
+          - PUID=1000
+          - TZ=Europe/Madrid
         links:
-            - jackett:jackett
-            - transmission:transmission
+          - jackett:jackett
+          - transmission:transmission
 
 
     bazarr:
         image: linuxserver/bazarr
         labels:
-            - "traefik.enable=true"
-            - "traefik.backend=bazarr"
-            - "traefik.frontend.rule=Host:bazarr.{{ private_domain }}"
-            - "traefik.frontend.entryPoints=http"
-            - "traefik.frontend.auth.basic.usersFile=/htpasswd"
+          - "traefik.enable=true"
+          - "traefik.http.routers.bazarr.rule=Host(`bazarr.{{ private_domain }}`)"
+          - "traefik.http.routers.bazarr.entrypoints=web"
+          - "traefik.http.middlewares.auth.basicauth.users={{ basic_auth }}"
+          - "traefik.http.routers.bazarr.middlewares=auth@docker"
         volumes:
-            - {{ installation_path }}bazarr/:/config
-            - {{ movies_dir }}:/movies
-            - {{ tvseries_dir }}:/tv
+          - {{ installation_path }}bazarr/:/config
+          - {{ movies_dir }}:/movies
+          - {{ tvseries_dir }}:/tv
         environment:
-            - PGID=1000
-            - PUID=1000
-            - TZ=Europe/Madrid
+          - PGID=1000
+          - PUID=1000
+          - TZ=Europe/Madrid
         links:
-            - radarr:radarr
-            - sonarr:sonarr
+          - radarr:radarr
+          - sonarr:sonarr
 
 
     plex:
         image: linuxserver/plex
         network_mode: host
         labels:
-            - "traefik.enable=true"
-            - "traefik.backend=plex"
-            - "traefik.frontend.rule=Host:plex.{{ private_domain }}"
-            - "traefik.frontend.entryPoints=http"
-            - "traefik.frontend.auth.basic.usersFile=/htpasswd"
+          - "traefik.enable=true"
+          - "traefik.http.routers.plex.rule=Host(`plex.{{ private_domain }}`)"
+          - "traefik.http.routers.plex.entrypoints=web"
         volumes:
-            - {{ movies_dir }}:/movies
-            - {{ tvseries_dir }}:/series
-            - {{ installation_path }}plex/library:/config
-            - {{ archive_dir1 }}:/archive1
-            - {{ archive_dir2 }}:/archive2
+          - {{ movies_dir }}:/movies
+          - {{ tvseries_dir }}:/series
+          - {{ installation_path }}plex/library:/config
+          - {{ archive_dir1 }}:/archive1
+          - {{ archive_dir2 }}:/archive2
         environment:
-            - PGID=1000
-            - PUID=1000
-            - VERSION=public
+          - PGID=1000
+          - PUID=1000
+          - VERSION=public
         ports:
-            - "32400:32400"
+          - "32400:32400"
 
     transmission:
         image: linuxserver/transmission
         labels:
           - "traefik.enable=true"
-          - "traefik.backend=transmission"
-          - "traefik.frontend.rule=Host:transmission.{{ private_domain }}"
-          - "traefik.frontend.entryPoints=http"
-          - "traefik.frontend.auth.basic.usersFile=/htpasswd"
+          - "traefik.http.routers.transmission.rule=Host(`transmission.{{ private_domain }}`)"
+          - "traefik.http.routers.transmission.entrypoints=web"
+          - "traefik.http.middlewares.auth.basicauth.users={{ basic_auth }}"
+          - "traefik.http.routers.transmission.middlewares=auth@docker"
         environment:
-            - PUID=1000
-            - PGID=1000
+          - PUID=1000
+          - PGID=1000
         volumes:
-            - {{ download_dir }}:/downloads
-            - {{ installation_path }}transmission:/config
-            - {{ download_dir }}Torrents:/watch
+          - {{ download_dir }}:/downloads
+          - {{ installation_path }}transmission:/config
+          - {{ download_dir }}Torrents:/watch
         ports:
-            - "51413:51413"
+          - "51413:51413"
 
     static:
         image: nginx
         labels:
           - "traefik.enable=true"
-          - "traefik.backend=static"
-          - "traefik.frontend.rule=Host:franhp.dev,chie.la,te.chie.la"
-          - "traefik.frontend.entryPoints=https"
+          - "traefik.http.routers.static.rule=Host(`franhp.dev`, `chie.la`, `te.chie.la`)"
+          - "traefik.http.routers.static.entrypoints=websecure"
+          - "traefik.http.routers.static.tls.certresolver=myresolver"
         volumes:
           - {{ installation_path }}nginx/config:/etc/nginx/conf.d/
           - {{ installation_path }}nginx/webpages:/usr/src/webpages/
 
 
     yt:
-      image: franhp/youtubedl-web
-      labels:
+        image: franhp/youtubedl-web
+        labels:
           - "traefik.enable=true"
-          - "traefik.backend=yt"
-          - "traefik.frontend.rule=Host:yt.{{ private_domain }}"
-          - "traefik.frontend.entryPoints=http"
-          - "traefik.frontend.auth.basic.usersFile=/htpasswd"
-      volumes:
-        - {{ download_dir }}:/downloads
+          - "traefik.http.routers.yt.rule=Host(`yt.{{ private_domain }}`)"
+          - "traefik.http.routers.yt.entrypoints=web"
+          - "traefik.http.middlewares.auth.basicauth.users={{ basic_auth }}"
+          - "traefik.http.routers.yt.middlewares=auth@docker"
+        volumes:
+          - {{ download_dir }}:/downloads
 
     moneymanager:
-      image: franhp/moneymanager
-      labels:
+        image: franhp/moneymanager
+        labels:
           - "traefik.enable=true"
-          - "traefik.backend=moneymanager"
-          - "traefik.frontend.rule=Host:moneymanager.{{ private_domain }}"
-          - "traefik.frontend.entryPoints=http"
-          - "traefik.frontend.auth.basic.usersFile=/htpasswd"
-      volumes:
+          - "traefik.http.routers.moneymanager.rule=Host(`moneymanager.{{ private_domain }}`)"
+          - "traefik.http.routers.moneymanager.entrypoints=web"
+          - "traefik.http.middlewares.auth.basicauth.users={{ basic_auth }}"
+          - "traefik.http.routers.moneymanager.middlewares=auth@docker"
+        volumes:
           - {{ dropbox_dir }}/Economia/db.sqlite3:/usr/src/app/db.sqlite3
